@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Léxico</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1c1c1c;
+            color: #ffffff;
+        }
+
+        .contenedor {
+            width: 700px;
+            margin: 80px auto;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 30px;
+            color: #ff1744;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #ff1744;
+            border-radius: 6px;
+            font-family: monospace;
+            background-color: #444444;
+            color: #ffffff;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #ff1744;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: background-color 0.3s;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background-color: #d50000;
+        }
+
+        .codigo-ingresado {
+            margin-top: 35px;
+            text-align: left;
+            background-color: #444444;
+            padding: 20px;
+            border: 1px solid #ff1744;
+            border-radius: 6px;
+        }
+
+        .contenedor_tabla {
+            margin-top: 40px;
+            text-align: left;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            color: #ffffff;
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: center;
+            border: 1px solid #ff1744;
+        }
+
+        th {
+            background-color: #ff1744;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(255, 23, 68, 0.2);
+        }
+
+        tr:hover {
+            background-color: rgba(255, 23, 68, 0.3);
+        }
+
+        @media (max-width: 800px) {
+            .contenedor {
+                width: 90%;
+                margin: 20px auto;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            button {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor">
+        <h1>Analizador Léxico</h1>
+        <textarea id="code" placeholder="Pega tu código aquí"></textarea>
+        <button onclick="submitCode()">Procesar</button>
+
+        <div class="codigo-ingresado">
+            <h2>Contenido del Código:</h2>
+            <pre id="displayCode">El código ingresado se mostrará aquí</pre>
+        </div>
+
+        <div class="contenedor_tabla">
+            <h2>Contadores de Tokens</h2>
+            <div id="tokenCounters">
+                <p>Reservado: <span id="reservedCount">0</span></p>
+                <p>Identificador: <span id="identifierCount">0</span></p>
+                <p>Delimitador: <span id="delimiterCount">0</span></p>
+                <p>Operador: <span id="operatorCount">0</span></p>
+                <p>Número: <span id="numberCount">0</span></p>
+                <p>Simbolo: <span id="symbolCount">0</span></p> <!-- Asegúrate de que este ID coincida con el del JavaScript -->
+            </div>
+            <table id="resultTable">
+                <thead>
+                    <tr>
+                        <th>Token</th>
+                        <th>Lexico</th>
+                        <th>Línea</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="3">No se han encontrado tokens</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function submitCode() {
+            var textarea = document.getElementById('code');
+            var displayCode = document.getElementById('displayCode');
+            displayCode.textContent = textarea.value;
+
+            fetch('/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code: textarea.value }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                var resultTable = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+                resultTable.innerHTML = ''; // Limpiar resultados previos
+
+                // Mostrar tokens
+                data.tokens.forEach(function(token) {
+                    var row = resultTable.insertRow();
+                    row.insertCell(0).textContent = token.value;
+                    row.insertCell(1).textContent = token.type;
+                    row.insertCell(2).textContent = token.lineno;
+                });
+
+                // Actualizar contadores
+                document.getElementById('reservedCount').textContent = data.counts.RESERVADO || 0;
+                document.getElementById('identifierCount').textContent = data.counts.IDENTIFICADOR || 0;
+                document.getElementById('delimiterCount').textContent = data.counts.DELIMITADOR || 0;
+                document.getElementById('operatorCount').textContent = data.counts.OPERADOR || 0;
+                document.getElementById('numberCount').textContent = data.counts.NUMERO || 0;
+                document.getElementById('symbolCount').textContent = data.counts.SIMBOLO || 0;  // Actualiza el contador de símbolos
+                
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
