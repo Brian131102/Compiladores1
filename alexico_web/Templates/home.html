@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Léxico y Sintáctico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .contenedor {
+            max-width: 700px;
+            margin: 50px auto;
+            background-color: #1c1c1c;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #ff0000;
+            border-radius: 8px;
+            background-color: #333;
+            color: #fff;
+            font-family: monospace;
+            resize: none;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #ff0000;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #cc0000;
+        }
+
+        .codigo {
+            margin-top: 20px;
+            background-color: #333;
+            padding: 10px;
+            border: 2px solid #ff0000;
+            border-radius: 8px;
+            font-family: monospace;
+            text-align: left;
+            color: #fff;
+        }
+
+        .contenedor_tabla {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ff0000;
+            color: white;
+        }
+
+        th {
+            background-color: #ff0000;
+        }
+
+        tr:nth-child(even) {
+            background-color: #222;
+        }
+
+        tr:hover {
+            background-color: #333;
+        }
+
+        .file-input-label {
+            display: flex;
+            /* Usamos flexbox para alinear el texto y el botón */
+            align-items: center;
+            /* Centra verticalmente el texto y el botón */
+            margin-bottom: 10px;
+            /* Margen inferior para separación */
+            font-weight: bold;
+            text-align: left;
+            color: white;
+        }
+
+        /* Estilo para el texto que dice "Ingrese el código a analizar" */
+        .input-label {
+            margin: 20px 0;
+            /* Margen superior e inferior para separar */
+            font-weight: bold;
+            font-size: 20px;
+            /* Tamaño de fuente aumentado */
+            color: #ff0000;
+            /* Color rojo para destacar */
+            text-align: center;
+            /* Centrar el texto */
+        }
+
+        .category-list {
+            list-style-type: none;
+            /* Elimina los puntos de la lista */
+            padding: 0;
+            /* Elimina el padding */
+            margin: 0;
+            /* Elimina el margen */
+            text-align: left;
+            /* Alinear el texto a la izquierda */
+        }
+
+        .category-list li {
+            background-color: #222;
+            /* Color de fondo de cada elemento de la lista */
+            border: 1px solid #ff0000;
+            /* Borde rojo */
+            border-radius: 8px;
+            /* Bordes redondeados */
+            padding: 10px;
+            /* Padding interno */
+            margin: 5px 0;
+            /* Margen entre los elementos */
+            display: flex;
+            /* Usamos flexbox para el diseño */
+            justify-content: flex-start;
+            /* Alinear elementos a la izquierda */
+            transition: background-color 0.3s;
+            /* Transición suave al pasar el ratón */
+        }
+
+        .category-list li:hover {
+            background-color: #333;
+            /* Color de fondo al pasar el ratón */
+        }
+
+        .category-name {
+            font-weight: bold;
+            /* Negrita para el nombre de la categoría */
+            color: #fff;
+            /* Color rojo */
+        }
+
+        .category-count {
+            color: #fff;
+            /* Color blanco para la cantidad */
+            margin-left: auto;
+            /* Mover el conteo a la derecha */
+        }
+
+        /* Asegura que haya un scroll si el contenido excede la altura de la pantalla */
+        html,
+        body {
+            height: 100%;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="contenedor">
+        <h1>Analizador Léxico y Sintáctico</h1>
+        <form method="POST">
+            <label class="file-input-label" for="file">
+                Seleccionar archivo:
+                <input type="file" id="file" name="file" style="margin-left: 10px;">
+                <!-- Añadir margen a la izquierda -->
+            </label>
+            <label class="input-label" for="code">Ingrese el código a analizar:</label><br>
+            <textarea id="code" name="code" placeholder="Escribe tu código aquí...">{{ code }}</textarea><br><br>
+            <button type="submit">Analizar</button>
+        </form>
+
+
+        {% if tokens %}
+        <div class="contenedor_tabla">
+            <h2>Tokens Analizados</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Token</th>
+                        <th>Valor</th>
+                        <th>Línea</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for token in tokens %}
+                    <tr>
+                        <td>{{ token.type }}</td>
+                        <td>{{ token.value }}</td>
+                        <td>{{ token.line }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if category_count %}
+        <h2>Conteo de Categorías de Tokens</h2>
+        <ul class="category-list">
+            {% for category, count in category_count.items() %}
+            <li>
+                <span class="category-name">{{ category }}</span>:
+                <span class="category-count">{{ count }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if resultado_sintactico %}
+        <div class="codigo">
+            <h2>Resultado del análisis sintáctico:</h2>
+            <ul>
+                {% for resultado in resultado_sintactico %}
+                <li>{{ resultado }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if tokens %}
+        <table>
+            <tr>
+                <th>Valor</th>
+                <th>Reservada</th>
+                <th>Identificador</th>
+                <th>Entero</th>
+                <th>Otros</th>
+                <th>Tipo</th>
+            </tr>
+            {% for token in tokens %}
+            <tr>
+                <td>{{ token['value'] }}</td>
+        
+                <!-- Revisar si el token es una palabra reservada, identificador o entero -->
+                <td>{{ 'X' if token['type'] == 'RESERVADA' else '' }}</td>
+                <td>{{ 'X' if token['type'] == 'IDENTIFICADOR' else '' }}</td>
+                <td>{{ 'X' if token['type'] == 'ENTERO' else '' }}</td>
+        
+                <!-- Otros tipos de tokens -->
+                <td>
+                    {% set other_types = ['PARIZQ', 'PARDER', 'ASIGNAR', 'PUNTOCOMA', 'MENORIGUAL', 'PLUSPLUS', 'LLAIZQ', 'LLADER', 'PUNTO', 'COMDOB', 'DOSPUNTO', 'SUMA'] %}
+                    {{ 'X' if token['type'] in other_types else '' }}
+                </td>
+        
+                <!-- Mostrar el tipo exacto del token -->
+                <td>{{ token['type'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+
+        
+        <div class="codigo">
+            <h2>Datos Ingresados:</h2>
+            <pre>{{ code }}</pre>
+            {% if tokens %}
+            <p>Se encontraron {{ tokens|length }} tokens.</p>
+            {% else %}
+            <p>No se encontraron tokens</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>
