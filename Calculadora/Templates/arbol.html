@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Árbol de Expresión</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        h1 {
+            color: #00509e;
+            margin-bottom: 5px;
+            font-size: 36px;
+        }
+        #expresion {
+            font-size: 20px;
+            margin-bottom: 30px; /* Aumenta el espacio debajo del subtítulo */
+            color: #ff5722;
+            text-align: center;
+        }
+        #arbol {
+            display: block;
+            width: 100%;
+            height: 70vh; /* Ajuste el tamaño del SVG */
+        }
+        .error {
+            color: red;
+        }
+        #backButton {
+            background-color: #00509e;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #backButton i {
+            font-size: 24px;
+            margin-right: 8px; /* Espacio entre el icono y el texto */
+        }
+        #backButton:hover {
+            background-color: #003f7a;
+        }
+        /* Responsividad */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 28px; /* Reducir tamaño en pantallas pequeñas */
+            }
+            #backButton {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+        }
+    </style>
+    <!-- Añadir la librería de iconos de Font Awesome -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>Árbol de Expresiones</h1>
+    <div id="expresion"></div>
+    <svg id="arbol"></svg>
+    <button id="backButton" onclick="window.location.href='/?expresion=' + encodeURIComponent(new URLSearchParams(window.location.search).get('expresion'))">
+        <i class="fas fa-arrow-left"></i> Regresar
+    </button>
+
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const expresion = new URLSearchParams(window.location.search).get('expresion');
+            document.getElementById('expresion').innerText = `La expresión a calcular es: ${expresion}`;
+            
+            const respuesta = await fetch('/generar_arbol', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ expresion })
+            });
+            const data = await respuesta.json();
+
+            if (data.error) {
+                document.body.innerHTML += `<p class="error">Error: ${data.error}</p>`;
+                return;
+            }
+
+            const width = document.body.clientWidth;
+            const height = document.body.clientHeight * 0.7; // El árbol ocupa el 70% de la altura
+
+            const svg = d3.select("#arbol")
+                .attr("width", width)
+                .attr("height", height);
+
+            const root = d3.hierarchy(data);
+            const treeLayout = d3.tree().size([width - 100, height - 100]);
+            treeLayout(root);
+
+            const g = svg.append("g")
+                .attr("transform", "translate(50, 50)");
+
+            // Dibujar las líneas con un grosor muy grande
+            g.selectAll("line")
+                .data(root.links())
+                .enter()
+                .append("line")
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y)
+                .attr("stroke", "#555")
+                .attr("stroke-width", 8); // Grosor de las líneas más grueso
+
+            const node = g.selectAll("g.node")
+                .data(root.descendants())
+                .enter()
+                .append("g")
+                .attr("class", "node")
+                .attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+            // Cambiar nodos a óvalos
+            node.append("ellipse")
+                .attr("rx", 40)  // Radio horizontal para que sea un óvalo
+                .attr("ry", 25)  // Radio vertical
+                .attr("fill", d => d.data.tipo === "OPERADOR" ? "#ffc107" : "#2196f3");
+
+            node.append("text")
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .attr("fill", "white")
+                .text(d => d.data.valor);
+
+            // Zoom y pan
+            const zoom = d3.zoom()
+                .scaleExtent([0.5, 5])
+                .on("zoom", (event) => {
+                    g.attr("transform", event.transform);
+                });
+
+            svg.call(zoom);
+        });
+    </script>
+</body>
+</html>
+
+
