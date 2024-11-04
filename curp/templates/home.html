@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Léxico y Sintáctico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto;
+        }
+
+        .contenedor {
+            max-width: 700px;
+            margin: 50px auto;
+            background-color: #1c1c1c;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        h1 {
+            color: #ff0000;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #ff0000;
+            border-radius: 8px;
+            background-color: #333;
+            color: #fff;
+            font-family: monospace;
+            resize: none;
+            box-sizing: border-box;
+            outline: none; /* Sin contorno al enfocar */
+        }
+
+        textarea:focus {
+            border-color: #ff6666; /* Cambia el color del borde al enfocar */
+        }
+
+        button {
+            background-color: #ff0000;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s, transform 0.3s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #cc0000;
+            transform: scale(1.05);
+        }
+
+        .codigo, .codigo1 {
+            margin-top: 20px;
+            background-color: #333;
+            padding: 10px;
+            border: 2px solid #ff0000;
+            border-radius: 8px;
+            font-family: monospace;
+            text-align: left;
+            color: #fff;
+            overflow-y: auto; /* Permitir el desplazamiento vertical en el contenedor */
+            max-height: 300px; /* Altura máxima para el contenedor */
+        }
+
+        /* Estilo para tablas */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ff0000;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #444;
+            color: #ff0000;
+        }
+
+        tr:nth-child(even) {
+            background-color: #222; /* Filas pares con fondo diferente */
+        }
+
+        tr:hover {
+            background-color: #444; /* Resaltar fila al pasar el ratón */
+        }
+
+        /* Mensaje de vacío */
+        .mensaje-vacio {
+            background-color: #222;
+            padding: 10px;
+            border: 2px solid #ff0000;
+            border-radius: 8px;
+            color: #ff0000;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .contenedor {
+                padding: 15px;
+            }
+
+            textarea {
+                height: 120px;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+
+        .estructura {
+    background-color: #333;
+    color: #fff;
+    padding: 15px;
+    border: 2px solid #ff0000;
+    border-radius: 10px;
+    margin: 20px auto; /* Esto centra el elemento horizontalmente */
+    font-size: 16px;
+    max-width: 600px; /* Ancho máximo para el contenedor */
+}
+
+    </style>
+</head>
+
+<body>
+     <div class="estructura">
+        <p>COPIA Y PEGALO EN EL ANALIZADOR LEXICO Y RELLENALO CON TUS DATOS</p>
+        <p>Nombre: Nombre Apellido P Apellido M</p>
+        <p>Fecha: Dia/Mes/Año</p>
+        <p>Genero: Hombre o Mujer</p>
+        <p>Estado: Chiapas</p>
+    </div>
+
+    <div class="contenedor">
+        <h1>Analizador Léxico y Sintáctico</h1>
+        <form method="POST" action="">
+            <label class="file-input-label" for="file">Seleccionar archivo:</label>
+            <input type="file" id="file" /><br />
+            <label class="file-input-label" for="code">Ingrese el código a analizar:</label>
+            <textarea id="code" name="code" placeholder="Escribe tu código aquí...">{{ code }}</textarea>
+            <br /><br />
+            <button type="submit">Analizar</button>
+        </form>
+
+        {% if code %}
+        <div class="codigo {% if has_error %}error{% else %}success{% endif %}">
+            {% if resultado_sintactico %}
+            <h2>Resultado del análisis sintáctico:</h2>
+            <ul>
+                {% for resultado in resultado_sintactico %}
+                <li>{{ resultado }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        <div class="codigo1">
+            <h2>Datos Ingresados:</h2>
+            <pre>{{ code }}</pre>
+            {% if tokens %}
+            <p>Se encontraron {{ tokens|length }} tokens.</p>
+            {% else %}
+            <p>No se encontraron tokens</p>
+            {% endif %}
+        </div>
+
+        {% if tokens %}
+        <div class="codigo {% if has_error %}error{% else %}success{% endif %}">
+            <h2 style="text-align: justify; color: rojo">Categoría de Tokens</h2>
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TOKEN</th>
+                            <th>Prioridad</th>
+                            <th>ID</th>
+                            <th>Número</th>
+                            <th>Símbolo</th>
+                            <th>Delimitador</th>
+                            <th>Otros</th>
+                            <th>TIPO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for token in tokens %}
+                        <tr>
+                            <td>{{ token['value'] }}</td>
+                            <td>{{ 'X' if token['type'] in ['RESERVADA', 'RESERVADO'] else '' }}</td>
+                            <td>{{ 'X' if token['type'] == 'IDENTIFICADOR' else '' }}</td>
+                            <td>{{ 'X' if token['type'] == 'ENTERO' else '' }}</td>
+                            <td>{{ 'X' if token['type'] in ['SIMBOLO', 'COMA'] else '' }}</td>
+                            <td>{{ 'X' if token['type'] in ['PARIZQ', 'PARDER', 'LLAIZQ', 'LLADER', 'CORIZQ', 'CORDER'] else '' }}</td>
+                            <td>{{ 'X' if token['type'] in ['OPERADOR', 'PLUSPLUS', 'COMDOB', 'DOSPUNTO', 'SUMA', 'RESTA'] else '' }}</td>
+                            <td>{{ token['type'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if contador %}
+                    <tr>
+                        <th>Cantidad:</th>
+                        <td>{{ contador['Reservada']+contador['Reservado'] }}</td>
+                        <td>{{ contador['Identificador'] }}</td>
+                        <td>{{ contador['Numero'] }}</td>
+                        <td>{{ contador['Simbolo'] }}</td>
+                        <td>{{ contador['Delimitador'] }}</td>
+                        <td>{{ contador['Desconocido'] }}</td>
+                        <td>Total: {{ tokens|length }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        <div class="codigo1">
+            <div class="contenedor_tabla">
+                <h2>Tokens Analizados</h2>
+                <table>
+                    <tr>
+                        <th>#</th>
+                        <th>Token</th>
+                        <th>Lexema</th>
+                        <th>Línea</th>
+                        <th>Posición</th>
+                    </tr>
+                    {% for i in range(0, tokens|length) %}
+                    <tr>
+                        <td>{{ i+1 }}</td>
+                        <td>{{ tokens[i].type }}</td>
+                        <td>{{ tokens[i].value }}</td>
+                        <td>{{ tokens[i].line }}</td>
+                        <td>{{ tokens[i].pos }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        {% endif %}
+        {% if category_count %}
+        <div class="codigo1">
+            <div class="contenedor_tabla">
+                <h2>Conteo de Categorías de Tokens</h2>
+                <table>
+                    <tr>
+                        <th>Categoría</th>
+                        <th>Cantidad</th>
+                    </tr>
+                    {% for category, count in category_count %}
+                    <tr>
+                        <td>{{ category }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="contenedor_tabla">
+            <p>No se encontraron categorías.</p>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="mensaje-vacio">
+            Por favor, ingrese código para analizar.
+        </div>
+        {% endif %}
+        {% if has_error %}
+        <div class="codigo1" style="color: red;">
+            <h2>Error:</h2>
+            <pre>{{ error_message }}</pre>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Manejador de eventos para la selección del archivo
+        document.getElementById("file").addEventListener("change", function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById("code").value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+    </script>
+</body>
+
+</html>
